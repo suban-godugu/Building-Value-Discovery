@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Building Value Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">HVAC &amp; BMS value discovery · AI optimisation readiness</div>
+      <h1>Building Value Discovery</h1>
+      <p>Scores design, system, subsystem, sensor and control effectiveness by tracing the 20 OEH optimisation strategies through your points register, utility bills and building manual.</p>
+    </div>
+    <div class="std" aria-label="Reference standards">
+      <span>NSW OEH 2015/0317</span><span>AIRAH DA28</span><span>AIRAH DA19</span><span>ASHRAE G36</span><span>ASHRAE 223P</span><span>Std 55</span><span>G14 M&amp;V</span>
+    </div>
+  </header>
+
+  <div class="banner" id="banner"><b>Citadines Trafalgar Square loaded.</b> Bills and building description come from the December 2024 energy audit (2023 electricity). The BMS point mapping is still the example status — upload the site's filled matrix for a point-accurate result.</div>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="panel basis">
+        <div class="panel-h"><h2><span class="step">00</span>Point analysis basis</h2></div>
+        <div class="panel-b">
+          <div class="seg" role="radiogroup" aria-label="Point analysis basis"><button type="button" role="radio" data-basis="AIRAH" aria-checked="true">AIRAH DA28<small>Traceability matrix</small></button><button type="button" role="radio" data-basis="G36" aria-checked="false">ASHRAE G36<small>Guideline 36-2021</small></button></div>
+          <div class="meta" id="basisNote"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2><span class="step">01</span><span id="mxTitle">Points traceability matrix</span></h2><span class="chip info" id="mxChip">—</span></div>
+        <div class="panel-b">
+          <div class="meta" id="mxSrc">Default: HVAC_AI_Points_Traceability_Matrix_AIRAH_specs.xlsx</div>
+          <div class="mini" id="mxMini"></div>
+          <label class="drop"><input type="file" id="mxFile" accept=".xlsx,.xlsm,.xls"><span id="mxUpl"><strong>Upload filled matrix</strong> (.xlsx). Reads Site object reference and Verified (Y/N).</span></label>
+          <label class="drop"><input type="file" id="ptFile" accept=".csv,.txt,.tsv"><strong>Or upload BMS point list</strong> (CSV / TXT) to auto-match tags</label>
+          <div class="row"><button class="btn small" id="openReg">Open points register</button><button class="btn small" id="mxReset">Restore default</button></div>
+          <div class="meta" id="mxMsg"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2><span class="step">02</span>Utility bills</h2><span class="chip info" id="billChip">—</span></div>
+        <div class="panel-b">
+          <label class="drop"><input type="file" id="billFile" accept=".pdf,.csv,.txt,.tsv" multiple><strong>Add electricity bills</strong> (PDF, one or many) or CSV, or paste below</label>
+          <div class="srcnote" id="billMsg" hidden></div>
+          <textarea id="billText" spellcheck="false" aria-label="Utility bill data"></textarea>
+          <div class="meta">Columns: Month, kWh, Peak_kW (or Peak_kVA), PF, Cost. PF and Cost are optional. PDF bills are read automatically (units consumed, max demand, power factor, bill amount) and added here as rows. Leave empty to take energy figures from the building manual.</div>
+          <div class="row"><button class="btn small" id="billClear">Clear bills · use manual</button></div>
+          <div class="srcnote" id="billNote" hidden></div>
+          <div style="border-top:1px solid var(--line);margin:12px 0 8px;padding-top:10px;font-weight:600">Gas bills <span class="meta" style="font-weight:400">(optional)</span> <span class="chip info" id="gasChip" style="float:right">—</span></div>
+          <label class="drop"><input type="file" id="gasFile" accept=".pdf,.csv,.txt,.tsv" multiple><strong>Add gas bills</strong> (PDF, one or many) or CSV, or paste below</label>
+          <div class="srcnote" id="gasMsg" hidden></div>
+          <textarea id="gasText" spellcheck="false" aria-label="Gas bill data" placeholder="Month,Gas_kWh,Cost&#10;2026-01,52000,4100"></textarea>
+          <div class="meta">Columns: Month, gas use (kWh, therms, m³/SCM, MMBtu or GJ — put the unit in the header, e.g. "SCM"), Cost. Converted to kWh. Gas savings come from the heating strategies.</div>
+          <div class="row"><button class="btn small" id="gasClear">Clear gas bills</button></div>
+          <div style="border-top:1px solid var(--line);margin:12px 0 8px;padding-top:10px;font-weight:600">Water bills <span class="meta" style="font-weight:400">(optional)</span> <span class="chip info" id="watChip" style="float:right">—</span></div>
+          <label class="drop"><input type="file" id="watFile" accept=".pdf,.csv,.txt,.tsv" multiple><strong>Add water bills</strong> (PDF, one or many) or CSV, or paste below</label>
+          <div class="srcnote" id="watMsg" hidden></div>
+          <textarea id="watText" spellcheck="false" aria-label="Water bill data" placeholder="Month,Water_kL,Cost&#10;2026-01,850,42500"></textarea>
+          <div class="meta">Columns: Month, water use (kL, m³, litres, gallons or CCF — put the unit in the header), Cost. Converted to kL. Water savings come from less cooling-tower make-up when chiller load falls.</div>
+          <div class="row"><button class="btn small" id="watClear">Clear water bills</button></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2><span class="step">03</span>Building user manual</h2><span class="chip info" id="manChip">—</span></div>
+        <div class="panel-b">
+          <label class="drop"><input type="file" id="manFile" accept=".pdf,.txt,.md"><strong>Add manual</strong> (PDF, TXT, MD) or paste below</label>
+          <textarea id="manText" spellcheck="false" aria-label="Building manual text" style="min-height:160px"></textarea>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2><span class="step">04</span>Site settings</h2></div>
+        <div class="panel-b"><div class="fields">
+          <label>Building name <span class="src" id="nSrc"></span><input id="sName" placeholder="Enter building name" value="Citadines Trafalgar Square, London"></label>
+          <label>Currency <span class="src" id="cSrc"></span><select id="sCur"><option value="£|en-GB" selected>£ GBP</option><option value="₹|en-IN">₹ INR</option><option value="A$|en-AU">A$ AUD</option><option value="$|en-US">$ USD</option></select></label>
+          <label>Floor area (m²) <span class="src" id="aSrc"></span><input id="sArea" type="number" min="1" placeholder="Not stated — intensity skipped"></label>
+          <label>Occupied h / week <span class="src" id="hSrc"></span><input id="sHours" type="number" min="1" max="168" placeholder="60 assumed if blank"></label>
+          <label>EUI benchmark (kWh/m²·yr) <span class="src" id="bSrc"></span><input id="sBench" type="number" value="131.32" step="0.01" placeholder="160 if blank"></label>
+          <label>HVAC share of site kWh (%) <span class="src" id="vSrc"></span><input id="sHvac" type="number" value="59" min="10" max="90" placeholder="55 if blank"></label>
+          <label>Demand charge (/kVA·month) <span class="src" id="dSrc"></span><input id="sDem" type="number" value="0"></label>
+          <label>Gas for space heating (%)<input id="sGasHeat" type="number" value="80" min="0" max="100"></label>
+          <label>Cooling-tower share of water (%) <span class="src" id="wSrc"></span><input id="sTowerW" type="number" min="0" max="100" placeholder="auto: 0 if air-cooled, else 30"></label>
+          <label>Water rate if no cost (/kL)<input id="sWatRate" type="number" step="0.01" placeholder="needed if water bills have no cost"></label>
+          <label>Gas rate if no cost (/kWh)<input id="sGasRate" type="number" step="0.001" placeholder="needed if gas bills have no cost"></label>
+          <label>Energy rate if no cost (/kWh) <span class="src" id="rSrc"></span><input id="sRate" type="number" value="0.265" step="0.001" placeholder="needed if bills have no cost"></label>
+        </div>
+        <label class="tog" style="margin-top:10px"><input type="checkbox" id="sNab" checked><div><b>NABERS rating — before &amp; after</b><span>Adds an indicative NABERS Energy star rating for today and after the identified savings to the reports. Needs the floor area. Not an official rating.</span></div></label>
+        <div class="fields" id="nabBox">
+          <label>NABERS building type<select id="sNabType"><option value="75">Office — base building</option><option value="140">Office — whole building</option><option value="60">Office — tenancy</option><option value="180">Hotel</option><option value="110">Shopping centre</option><option value="45">Apartment building</option></select></label>
+          <label>5-star reference (kWhe/m²·yr)<input id="sNabRef" type="number" min="1" step="1" value="75"></label>
+        </div></div>
+      </section>
+      <section class="panel">
+        <div class="panel-h"><h2><span class="step">05</span>Financial assumptions</h2><span class="chip ok" id="capChip">No capex</span></div>
+        <div class="panel-b">
+        <label class="tog"><input type="checkbox" id="fNoCap" checked><div><b>No-capex mode</b><span>Leaves out point installation, commissioning and tariff-action costs. Reports show savings, net saving after the platform fee, NPV and carbon, with no investment or payback.</span></div></label>
+        <div class="fields">
+          <label>Cost per missing point<input id="fPt" type="number" min="0" value="600"></label>
+          <label>Commissioning per strategy<input id="fCx" type="number" min="0" value="4000"></label>
+          <label>AI platform fee (/m²·yr)<input id="fPlat" type="number" min="0" value="1.5" step="0.1"></label>
+          <label>Tariff actions (APFC service)<input id="fTar" type="number" min="0" value="5000"></label>
+          <label>Tariff escalation (%/yr)<input id="fEsc" type="number" value="5" step="0.5"></label>
+          <label>Discount rate (%)<input id="fDisc" type="number" value="10" step="0.5"></label>
+          <label>Analysis period (years)<input id="fYrs" type="number" min="1" max="25" value="10"></label>
+          <label>Grid factor (kg CO₂/kWh)<input id="fGrid" type="number" min="0" value="0.208" step="0.001"></label>
+          <label>Gas factor (kg CO₂/kWh)<input id="fGasCo2" type="number" min="0" value="0.183" step="0.001"></label>
+        </div><div class="meta">Same currency as site settings. Grid factor 0.208 kg/kWh = audit carbon (360 t) ÷ electricity (1,731,400 kWh).</div></div>
+      </section>
+      <button class="btn primary" id="analyse">Analyse &amp; correlate</button>
+      <div class="meta" id="runMeta"></div>
+    </aside>
+
+    <main class="board">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-v="one">Executive report</button>
+        <button class="tab" role="tab" aria-selected="false" data-v="reg">Points register</button>
+        <button class="tab" role="tab" aria-selected="false" data-v="gap">Detailed gap analysis</button>
+      </div>
+      <div id="v-reg" hidden></div>
+      <div id="v-one"></div>
+      <div id="v-gap" hidden></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
